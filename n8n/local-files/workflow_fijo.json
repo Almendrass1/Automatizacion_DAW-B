@@ -1,0 +1,106 @@
+{
+    "name": "Automatización Google Drive - Ollama - Email (FIJO)",
+    "nodes": [
+        {
+            "parameters": {
+                "pollTimes": {
+                    "item": [
+                        {
+                            "mode": "everyMinute"
+                        }
+                    ]
+                },
+                "resource": "file",
+                "event": "created",
+                "folderId": "REEMPLAZAR_CON_ID_CARPETA",
+                "options": {
+                    "resolveData": true,
+                    "download": true
+                }
+            },
+            "id": "7f8b9c0a-1e2d-3f4g-5h6i-7j8k9l0m1n2o",
+            "name": "Google Drive Trigger",
+            "type": "n8n-nodes-base.googleDriveTrigger",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "REEMPLAZAR_CON_NOMBRE_CREDENCIAL"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://ollama-service:11434/api/generate",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"model\": \"llama3.2:1b\",\n  \"prompt\": \"Analiza este archivo y genera un resumen breve.\",\n  \"stream\": false\n}",
+                "options": {}
+            },
+            "id": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+            "name": "Ollama Analysis",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "fuentes.marinanaa07@gmail.com",
+                "toEmail": "fuentes.marinanaa07@gmail.com",
+                "subject": "Nuevo archivo en Google Drive",
+                "html": "Resumen generado por IA: El archivo ha sido procesado.",
+                "options": {
+                    "appendAttachements": "data"
+                }
+            },
+            "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
+            "name": "Email Sender",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                900,
+                300
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "REEMPLAZAR_CON_SMTP_CREDENTIAL"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Google Drive Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Ollama Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ollama Analysis": {
+            "main": [
+                [
+                    {
+                        "node": "Email Sender",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

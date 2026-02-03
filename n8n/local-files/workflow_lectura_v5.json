@@ -1,0 +1,245 @@
+{
+    "name": "Automatización GDrive - MÉTODO TOTAL (v5)",
+    "nodes": [
+        {
+            "parameters": {
+                "pollTimes": {
+                    "item": [
+                        {
+                            "mode": "everyMinute"
+                        }
+                    ]
+                },
+                "resource": "file",
+                "event": "created",
+                "folderId": "REEMPLAZAR_CON_ID_CARPETA",
+                "options": {}
+            },
+            "id": "7f8b9c0a-1e2d-3f4g-5h6i-7j8k9l0m1n2o",
+            "name": "Google Drive Trigger",
+            "type": "n8n-nodes-base.googleDriveTrigger",
+            "typeVersion": 1,
+            "position": [
+                -200,
+                300
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "REEMPLAZAR_CON_NOMBRE_CREDENCIAL"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "type": "string"
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.mimeType }}",
+                                        "rightValue": "application/vnd.google-apps.document",
+                                        "operator": "equals"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "outputIndex": 1
+                        }
+                    ]
+                },
+                "fallbackOutput": 0
+            },
+            "id": "s1s2s3s4-t5u6-v7w8-x9y0-z1a2b3c4d5e6",
+            "name": "Is Google Doc?",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 1,
+            "position": [
+                20,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "operation": "download",
+                "fileId": "={{ $node[\"Google Drive Trigger\"].json[\"id\"] }}",
+                "options": {}
+            },
+            "id": "d1d2d3d4-e5e6-f7f8-g9g0-h1a2b3c4d5e6",
+            "name": "Download Normal File",
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 2,
+            "position": [
+                250,
+                200
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "REEMPLAZAR_CON_NOMBRE_CREDENCIAL"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "operation": "export",
+                "fileId": "={{ $node[\"Google Drive Trigger\"].json[\"id\"] }}",
+                "outputFormat": "application/pdf"
+            },
+            "id": "e1e2e3e4-f5g6-h7i8-j9k0-l1m2n3o4p5q6",
+            "name": "Export Google Doc",
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 2,
+            "position": [
+                250,
+                400
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "REEMPLAZAR_CON_NOMBRE_CREDENCIAL"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "pdf",
+                "options": {}
+            },
+            "id": "b1b2b3b4-c5c6-d7d8-e9e0-f1a2b3c4d5e6",
+            "name": "Extract from File",
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://ollama-service:11434/api/generate",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"model\": \"llama3.2:1b\",\n  \"prompt\": \"Resume este contenido: \" + $node[\"Extract from File\"].json[\"text\"],\n  \"stream\": false\n}",
+                "options": {}
+            },
+            "id": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
+            "name": "Ollama Analysis",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                750,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "fuentes.marinanaa07@gmail.com",
+                "toEmail": "fuentes.marinanaa07@gmail.com",
+                "subject": "=Análisis de: {{ $node[\"Google Drive Trigger\"].json[\"name\"] }}",
+                "html": "=<h3>Resumen detallado del contenido:</h3>\n<p>{{ $node[\"Ollama Analysis\"].json[\"response\"] }}</p>",
+                "options": {
+                    "appendAttachements": "data"
+                }
+            },
+            "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
+            "name": "Email Sender",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1000,
+                300
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "REEMPLAZAR_CON_SMTP_CREDENTIAL"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Google Drive Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Is Google Doc?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Google Doc?": {
+            "main": [
+                [
+                    {
+                        "node": "Download Normal File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Export Google Doc",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Download Normal File": {
+            "main": [
+                [
+                    {
+                        "node": "Extract from File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Export Google Doc": {
+            "main": [
+                [
+                    {
+                        "node": "Extract from File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract from File": {
+            "main": [
+                [
+                    {
+                        "node": "Ollama Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ollama Analysis": {
+            "main": [
+                [
+                    {
+                        "node": "Email Sender",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    }
+}
