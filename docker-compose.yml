@@ -27,7 +27,7 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=false
       - WEBHOOK_URL=http://localhost:5678
       - EXECUTIONS_DATA_PRUNE=true
-      - N8N_ENCRYPTION_KEY=clave-segura-daw2
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-clave-segura-daw2}
       - N8N_PROTOCOL=http
       - N8N_HOST=localhost
       - NODE_OPTIONS=--dns-result-order=ipv4first
