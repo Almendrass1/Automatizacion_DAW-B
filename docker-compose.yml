@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  ollama:
+    build:
+      context: .
+      dockerfile: ./ollama/Dockerfile
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - automacion-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+  n8n:
+    image: n8nio/n8n:2.7.0
+    container_name: n8n-workflow
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - WEBHOOK_URL=http://localhost:5678
+      - EXECUTIONS_DATA_PRUNE=true
+      - N8N_ENCRYPTION_KEY=clave-segura-daw2
+      - N8N_PROTOCOL=http
+      - N8N_HOST=localhost
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ./n8n/local-files:/files
+    networks:
+      - automacion-network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
+  n8n-data:
+
+
+networks:
+  automacion-network:
+    driver: bridge
